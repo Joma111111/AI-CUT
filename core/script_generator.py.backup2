@@ -1,0 +1,293 @@
+"""
+文案生成器
+功能：使用AI生成视频解说文案
+"""
+
+import os
+import base64
+from typing import List, Dict, Optional
+import google.generativeai as genai
+from openai import OpenAI
+from utils.logger import get_logger
+from .exceptions import ScriptGenerationError
+import config
+
+logger = get_logger(__name__)
+
+
+class ScriptGenerator:
+    """文案生成器"""
+    
+    def __init__(self, model: str = "openai",
+                 api_key: Optional[str] = None):
+        """
+        初始化文案生成器
+        
+        Args:
+            model: 使用的模型 (gemini, openai)
+            api_key: API密钥
+        """
+        self.model = model
+        self.api_key = api_key or self._get_default_api_key()
+        
+        # 初始化客户端
+        if self.model == "gemini":
+            genai.configure(api_key=self.api_key)
+            self.client = genai.GenerativeModel('gemini-pro-vision')
+        elif self.model == "openai":
+            self.client = OpenAI(api_key=self.api_key)
+        else:
+            raise ValueError(f"不支持的模型: {model}")
+        
+        logger.info(f"文案生成器初始化: model={model}")
+    
+    def _get_default_api_key(self) -> str:
+        """获取默认API密钥"""
+        if self.model == "gemini":
+            return config.GEMINI_API_KEY
+        elif self.model == "openai":
+            return config.OPENAI_API_KEY
+        return ""
+    
+    def generate(self, 
+                keyframes: List[Dict],
+                style: str = "drama",
+                length: int = 500,
+                context: Optional[str] = None,
+                progress_callback: Optional[callable] = None) -> List[Dict]:
+        """
+        生成解说文案
+        
+        Args:
+            keyframes: 关键帧列表
+            style: 解说风格 (drama, comedy, suspense, action, documentary)
+            length: 文案长度（字数）
+            context: 额外上下文信息
+            progress_callback: 进度回调
+            
+        Returns:
+            每个镜头的文案列表
+            
+        Raises:
+            ScriptGenerationError: 生成失败时抛出
+        """
+        logger.info(f"开始生成文案: {len(keyframes)} 个关键帧, 风格={style}")
+        
+        try:
+            # 按镜头分组关键帧
+            scenes_keyframes = self._group_by_scene(keyframes)
+            
+            scripts = []
+            total_scenes = len(scenes_keyframes)
+            
+            for idx, (scene_id, kfs) in enumerate(scenes_keyframes.items()):
+                # 生成该镜头的文案
+                script = self._generate_for_scene(kfs, style, length, context)
+                
+                scripts.append({
+                    'scene_id': scene_id,
+                    'script': script,
+                    'word_count': len(script),
+                })
+                
+                if progress_callback:
+                    progress = (idx + 1) / total_scenes * 100
+                    progress_callback(progress)
+            
+            logger.info(f"文案生成完成: {len(scripts)} 个镜头")
+            return scripts
+            
+        except Exception as e:
+            logger.error(f"文案生成失败: {str(e)}", exc_info=True)
+            raise ScriptGenerationError(f"文案生成失败: {str(e)}")
+    
+    def _group_by_scene(self, keyframes: List[Dict]) -> Dict[str, List[Dict]]:
+        """按镜头分组关键帧"""
+        grouped = {}
+        
+        for kf in keyframes:
+            scene_id = kf.get('scene_id', 'unknown')
+            if scene_id not in grouped:
+                grouped[scene_id] = []
+            grouped[scene_id].append(kf)
+        
+        return grouped
+    
+    def _generate_for_scene(self, 
+                           keyframes: List[Dict],
+                           style: str,
+                           length: int,
+                           context: Optional[str]) -> str:
+        """为单个镜头生成文案"""
+        
+        # 构建提示词
+        prompt = self._build_prompt(keyframes, style, length, context)
+        
+        # 准备图片
+        images = self._load_images(keyframes)
+        
+        # 调用AI生成
+        if self.model == "gemini":
+            return self._generate_with_gemini(prompt, images)
+        elif self.model == "openai":
+            return self._generate_with_openai(prompt, images)
+        
+        return ""
+    
+    def _build_prompt(self, 
+                     keyframes: List[Dict],
+                     style: str,
+                     length: int,
+                     context: Optional[str]) -> str:
+        """构建提示词"""
+        
+        style_descriptions = {
+            'drama': '剧情解说风格，注重情节发展和情感表达',
+            'comedy': '搞笑解说风格，幽默风趣，轻松活泼',
+            'suspense': '悬疑解说风格，营造紧张氛围，引发思考',
+            'action': '动作解说风格，节奏紧凑，激情澎湃',
+            'documentary': '纪录片风格，客观理性，信息丰富',
+        }
+        
+        style_desc = style_descriptions.get(style, '专业解说风格')
+        
+        prompt = f"""
+你是一位专业的视频解说文案创作者。请根据提供的视频关键帧图片，创作一段{style_desc}的解说文案。
+
+要求：
+1. 文案长度约{length}字
+2. 风格：{style_desc}
+3. 语言流畅自然，富有感染力
+4. 紧密结合图片内容，描述准确
+5. 适合作为视频旁白使用
+
+"""
+        
+        if context:
+            prompt += f"\n额外背景信息：{context}\n"
+        
+        prompt += "\n请直接输出文案内容，不要包含任何解释或标注。"
+        
+        return prompt
+    
+    def _load_images(self, keyframes: List[Dict]) -> List:
+        """加载关键帧图片"""
+        images = []
+        
+        for kf in keyframes:
+            image_path = kf.get('image_path')
+            if image_path and os.path.exists(image_path):
+                with open(image_path, 'rb') as f:
+                    image_data = f.read()
+                    images.append(image_data)
+        
+        return images
+    
+    def _generate_with_gemini(self, prompt: str, images: List) -> str:
+        """使用Gemini生成文案"""
+        try:
+            # 准备内容
+            contents = [prompt]
+            
+            # 添加图片
+            for image_data in images:
+                contents.append({
+                    'mime_type': 'image/jpeg',
+                    'data': image_data
+                })
+            
+            # 生成
+            response = self.client.generate_content(
+                contents,
+                generation_config={
+                    'temperature': config.GEMINI_TEMPERATURE,
+                    'max_output_tokens': config.GEMINI_MAX_TOKENS,
+                }
+            )
+            
+            return response.text.strip()
+            
+        except Exception as e:
+            raise ScriptGenerationError(f"Gemini生成失败: {str(e)}")
+    
+    def _generate_with_openai(self, prompt: str, images: List) -> str:
+        """使用OpenAI生成文案"""
+        try:
+            # 准备消息
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ]
+                }
+            ]
+            
+            # 添加图片
+            for image_data in images:
+                base64_image = base64.b64encode(image_data).decode('utf-8')
+                messages[0]["content"].append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    }
+                })
+            
+            # 生成
+            response = self.client.chat.completions.create(
+                model=config.OPENAI_MODEL,
+                messages=messages,
+                temperature=config.OPENAI_TEMPERATURE,
+                max_tokens=config.OPENAI_MAX_TOKENS,
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            raise ScriptGenerationError(f"OpenAI生成失败: {str(e)}")
+    
+    def optimize(self, script: str, 
+                target_length: Optional[int] = None) -> str:
+        """
+        优化文案
+        
+        Args:
+            script: 原始文案
+            target_length: 目标长度
+            
+        Returns:
+            优化后的文案
+        """
+        logger.info("优化文案")
+        
+        prompt = f"""
+请优化以下视频解说文案，使其更加流畅、生动、富有感染力。
+
+原文案：
+{script}
+
+要求：
+1. 保持原意不变
+2. 语言更加精炼优美
+3. 增强感染力和吸引力
+"""
+        
+        if target_length:
+            prompt += f"4. 控制长度在{target_length}字左右\n"
+        
+        prompt += "\n请直接输出优化后的文案。"
+        
+        try:
+            if self.model == "gemini":
+                response = self.client.generate_content(prompt)
+                return response.text.strip()
+            elif self.model == "openai":
+                response = self.client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7,
+                )
+                return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"文案优化失败: {str(e)}")
+            return script

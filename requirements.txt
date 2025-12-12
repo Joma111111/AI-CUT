@@ -1,0 +1,34 @@
+# GUI框架
+PyQt6==6.6.1
+PyQt6-Qt6==6.6.1
+
+# 视频处理
+opencv-python==4.9.0.80
+ffmpeg-python==0.2.0
+scenedetect[opencv]==0.6.3
+
+# AI模型
+openai==1.10.0
+google-generativeai==0.3.2
+openai-whisper==20231117
+
+# TTS
+edge-tts==6.1.9
+pydub==0.25.1
+
+# 图像处理
+Pillow==10.2.0
+numpy==1.26.3
+
+# 数据处理
+pandas==2.2.0
+
+# 日志
+loguru==0.7.2
+
+# 系统信息
+psutil==5.9.7
+
+# 其他工具
+requests==2.31.0
+tqdm==4.66.1

@@ -1,0 +1,225 @@
+"""
+配置文件示例
+复制此文件为 config.py 并修改相应配置
+"""
+
+# ============================================
+# 应用配置
+# ============================================
+
+# 应用信息
+APP_NAME = "悟剪 AIcraft"
+APP_VERSION = "1.0.0"
+APP_AUTHOR = "AIcraft Team"
+
+# 调试模式
+DEBUG = False
+
+# ============================================
+# 服务端API配置
+# ============================================
+
+# API地址
+SERVER_API_URL = "http://localhost:8000"
+SERVER_API_PREFIX = "/api/v1"
+
+# 超时设置（秒）
+API_TIMEOUT = 30
+
+# 重试次数
+API_RETRY_COUNT = 3
+
+# ============================================
+# AI模型配置
+# ============================================
+
+# Gemini API
+GEMINI_API_KEY = "your-gemini-api-key-here"
+GEMINI_MODEL = "gemini-pro-vision"
+GEMINI_TEMPERATURE = 0.7
+GEMINI_MAX_TOKENS = 2048
+
+# OpenAI API
+OPENAI_API_KEY = "sk-test-key"
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+OPENAI_MODEL = "openai"
+OPENAI_TEMPERATURE = 0.7
+OPENAI_MAX_TOKENS = 2048
+
+# 默认使用的AI模型
+DEFAULT_AI_MODEL = "openai"  # gemini 或 openai
+
+# ============================================
+# TTS配置
+# ============================================
+
+# TTS引擎
+TTS_ENGINE = "indextts"  # indextts, edge, azure, local
+
+# 默认音色
+TTS_DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
+
+# 语速（0.5-2.0）
+TTS_DEFAULT_RATE = 1.0
+
+# 音调（0.5-2.0）
+TTS_DEFAULT_PITCH = 1.0
+
+# 音量（0.0-1.0）
+TTS_DEFAULT_VOLUME = 1.0
+
+# Azure TTS配置（如果使用）
+AZURE_TTS_KEY = "your-azure-tts-key"
+AZURE_TTS_REGION = "eastasia"
+
+# ============================================
+# 视频分析配置
+# ============================================
+
+# 镜头检测阈值（0-100，值越小越敏感）
+SCENE_DETECTION_THRESHOLD = 30.0
+
+# 镜头检测方法
+SCENE_DETECTION_METHOD = "content"  # content, threshold, adaptive
+
+# 关键帧提取模式
+KEYFRAME_MODE = "medium"  # low, medium, high, custom
+
+# 每个镜头最大关键帧数
+MAX_KEYFRAMES_PER_SCENE = 3
+
+# 最小镜头时长（秒）
+MIN_SCENE_DURATION = 1.0
+
+# 最大镜头时长（秒）
+MAX_SCENE_DURATION = 30.0
+
+# ============================================
+# Whisper配置
+# ============================================
+
+# Whisper模型大小
+WHISPER_MODEL = "base"  # tiny, base, small, medium, large
+
+# 识别语言
+WHISPER_LANGUAGE = "zh"
+
+# 是否使用GPU
+WHISPER_USE_GPU = True
+
+# ============================================
+# 文件路径配置
+# ============================================
+
+# 本地数据库路径
+LOCAL_DB_PATH = "database/aicraft_local.db"
+
+# 临时文件目录
+TEMP_DIR = "temp"
+
+# 缓存目录
+CACHE_DIR = "cache"
+
+# 项目保存目录
+PROJECTS_DIR = "projects"
+
+# 导出目录
+EXPORT_DIR = "exports"
+
+# 日志目录
+LOG_DIR = "logs"
+
+# ============================================
+# 日志配置
+# ============================================
+
+# 日志级别
+LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# 日志文件
+LOG_FILE = "logs/aicraft.log"
+
+# 日志格式
+LOG_FORMAT = "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}"
+
+# 日志文件大小限制（MB）
+LOG_MAX_SIZE = 10
+
+# 日志文件保留数量
+LOG_BACKUP_COUNT = 5
+
+# ============================================
+# 许可证配置
+# ============================================
+
+# 许可证检查间隔（秒）
+LICENSE_CHECK_INTERVAL = 3600  # 1小时
+
+# 试用次数
+TRIAL_COUNT = 3
+
+# ============================================
+# 性能配置
+# ============================================
+
+# 最大并发任务数
+MAX_CONCURRENT_TASKS = 3
+
+# 视频处理线程数
+VIDEO_PROCESSING_THREADS = 4
+
+# 内存限制（MB）
+MEMORY_LIMIT = 4096
+
+# ============================================
+# UI配置
+# ============================================
+
+# 主题
+UI_THEME = "dark"  # light, dark
+
+# 语言
+UI_LANGUAGE = "zh_CN"  # zh_CN, en_US
+
+# 窗口大小
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 800
+
+# 是否记住窗口位置
+REMEMBER_WINDOW_POSITION = True
+
+# ============================================
+# 高级配置
+# ============================================
+
+# 是否启用GPU加速
+ENABLE_GPU = True
+
+# FFmpeg路径（留空则使用系统PATH）
+FFMPEG_PATH = ""
+
+# 代理设置（如果需要）
+HTTP_PROXY = ""
+HTTPS_PROXY = ""
+
+# 是否自动检查更新
+AUTO_CHECK_UPDATE = True
+
+# 更新检查间隔（秒）
+UPDATE_CHECK_INTERVAL = 86400  # 24小时
+
+# 是否发送匿名使用统计
+SEND_ANALYTICS = True
+
+# ============================================
+# 开发者选项
+# ============================================
+
+# 是否启用开发者工具
+ENABLE_DEV_TOOLS = False
+
+# 是否显示性能监控
+SHOW_PERFORMANCE_MONITOR = False
+
+# 是否启用实验性功能
+ENABLE_EXPERIMENTAL_FEATURES = False
