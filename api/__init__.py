@@ -2,7 +2,6 @@
 API客户端模块
 """
 
-from .cloud_client import CloudClient
-from .ai_client import AIClient
+# API模块已简化，直接使用config中的配置
 
-__all__ = ['CloudClient', 'AIClient']
+__all__ = []
